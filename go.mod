@@ -1,4 +1,4 @@
-module github.com/xiaoowen/chatgpt
+module github.com/xiaoowen/chatgpt-proxy
 
 go 1.18
 
