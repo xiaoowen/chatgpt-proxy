@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/pkoukk/tiktoken-go"
 	"io"
 	"log"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/pkoukk/tiktoken-go"
 	"github.com/sashabaranov/go-openai"
 	"github.com/sirupsen/logrus"
 )
@@ -244,7 +244,15 @@ func chatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	defer stream.Close()
 
 	// stream return
-	w.Header().Set("content-type", "application/json;charset=utf-8")
+	// w.Header().Set("content-type", "application/json;charset=utf-8")
+	// cors
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	// sse
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
 	w.WriteHeader(http.StatusOK)
 	f, ok := w.(http.Flusher)
 	if !ok {
