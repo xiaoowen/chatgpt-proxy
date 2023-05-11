@@ -297,7 +297,7 @@ func flushResponse(f http.Flusher, w http.ResponseWriter, ret *chatResponse) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else {
-		b = append(b, '\n') // flush的内容保证以\n结尾
+		b = append(b, '\n', '\n') // flush的内容保证以\n结尾，追加两个换行
 		if _, err := w.Write(b); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
