@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"path"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/pkoukk/tiktoken-go"
@@ -228,7 +229,7 @@ func isPostRequest(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func chatStreamHandler(w http.ResponseWriter, r *http.Request) {
-	instance, err := getChatInstance(w, r)
+	instance, err := getChatInstance(w, r, true)
 	if err != nil {
 		logrus.Error(err)
 		return
@@ -306,7 +307,7 @@ func flushResponse(f http.Flusher, w http.ResponseWriter, ret *chatResponse) {
 }
 
 func chatHandler(w http.ResponseWriter, r *http.Request) {
-	instance, err := getChatInstance(w, r)
+	instance, err := getChatInstance(w, r, false)
 	if err != nil {
 		logrus.Error(err)
 		return
@@ -343,18 +344,25 @@ type chatInstance struct {
 	payload openai.ChatCompletionRequest
 }
 
-func getChatInstance(w http.ResponseWriter, r *http.Request) (instance *chatInstance, err error) {
+func getChatInstance(w http.ResponseWriter, r *http.Request, isStream bool) (instance *chatInstance, err error) {
 	instance = &chatInstance{}
 
-	if !isPostRequest(w, r) {
-		return nil, errors.New("method not allowed")
+	instance.payload = openai.ChatCompletionRequest{}
+	if isStream {
+		if err := json.NewDecoder(strings.NewReader(r.FormValue("data"))).Decode(&instance.payload); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return nil, err
+		}
+	} else {
+		if !isPostRequest(w, r) {
+			return nil, errors.New("method not allowed")
+		}
+		if err := json.NewDecoder(r.Body).Decode(&instance.payload); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return nil, err
+		}
 	}
 
-	instance.payload = openai.ChatCompletionRequest{}
-	if err := json.NewDecoder(r.Body).Decode(&instance.payload); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return nil, err
-	}
 	messageLen := len(instance.payload.Messages)
 	if messageLen == 0 {
 		http.Error(w, "content empty", http.StatusBadRequest)
