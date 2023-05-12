@@ -399,6 +399,7 @@ type chatResponse struct {
 
 func render(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("cess-Control-Allow-Headers", "Access-Token")
 	if b, err := json.Marshal(data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
