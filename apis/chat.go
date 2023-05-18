@@ -84,8 +84,9 @@ func StreamChat(ctx *fiber.Ctx) error {
 					break
 				}
 			}
+			logrus.Infof("response_text: %s", responseText)
 			if err != nil {
-				logrus.Infof("stream recv error: %s", err.Error())
+				logrus.Errorf("stream recv error: %s", err.Error())
 				break
 			}
 			ret := &chatResponse{Content: resp.Choices[0].Delta.Content}
