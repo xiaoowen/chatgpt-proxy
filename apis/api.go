@@ -30,9 +30,8 @@ var sseHeaders = map[string]string{
 }
 
 func getRequestUserInfo(ctx *fiber.Ctx) (user *data.User, err error) {
-	headers := ctx.GetReqHeaders()
-	token, ok := headers["Access-Token"]
-	if token == "" || !ok {
+	token := ctx.Get("Access-Token", "")
+	if token == "" {
 		return nil, errors.New("invalid user token")
 	}
 	user = data.GetUser(token)

@@ -103,7 +103,7 @@ func flushSSEResponse(w *bufio.Writer, data interface{}) bool {
 		logrus.Error(err)
 		return false
 	} else {
-		fmt.Fprintf(w, "data: %s\n\n", string(b))
+		_, _ = fmt.Fprintf(w, "data: %s\n\n", string(b))
 		if err := w.Flush(); err != nil {
 			return false
 		}
@@ -114,14 +114,17 @@ func flushSSEResponse(w *bufio.Writer, data interface{}) bool {
 func getChatCompletionInstance(ctx *fiber.Ctx, usingStream bool) (instance *chatInstance, err error) {
 	instance = &chatInstance{}
 	instance.payload = openai.ChatCompletionRequest{}
+	var reader io.Reader
 	if usingStream {
-		if err := json.NewDecoder(strings.NewReader(ctx.Get("data", ""))).Decode(&instance.payload); err != nil {
-			return nil, err
-		}
+		reader = strings.NewReader(ctx.Query("data", ""))
 	} else {
-		if err := json.NewDecoder(bytes.NewReader(ctx.Body())).Decode(&instance.payload); err != nil {
-			return nil, err
-		}
+		reader = bytes.NewReader(ctx.Body())
+	}
+	if reader == nil {
+		return nil, errors.New("io.reader undefined")
+	}
+	if err := json.NewDecoder(reader).Decode(&instance.payload); err != nil {
+		return nil, err
 	}
 
 	messageLen := len(instance.payload.Messages)
