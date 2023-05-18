@@ -1,4 +1,4 @@
-package main
+package data
 
 const RedisUsersKey = "chatgpt:users"
 const RedisUserItemKey = "chatgpt:user:%s"

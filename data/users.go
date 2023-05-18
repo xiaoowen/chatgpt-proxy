@@ -1,4 +1,4 @@
-package main
+package data
 
 import (
 	"context"
@@ -88,7 +88,7 @@ var users = &UserStore{
 	m: make(map[string]*User),
 }
 
-func getAllUser() []*User {
+func GetAllUser() []*User {
 	users.Lock()
 	defer users.Unlock()
 
@@ -99,7 +99,7 @@ func getAllUser() []*User {
 	return data
 }
 
-func getUser(token string) *User {
+func GetUser(token string) *User {
 	if token == "" {
 		return nil
 	}
@@ -111,7 +111,7 @@ func getUser(token string) *User {
 	return users.m[token]
 }
 
-func initUsers() error {
+func InitUsers() error {
 	data, err := rd.SMembers(context.Background(), RedisUsersKey).Result()
 	if err != nil {
 		return err
@@ -155,9 +155,8 @@ func storeUser(u *User) error {
 	return nil
 }
 
-func generateUserToken(n int) string {
+func GenerateUserToken(n int) string {
 	bytes := make([]byte, n/2)
-	rand.Seed(time.Now().UnixNano())
-	rand.Read(bytes)
+	rand.New(rand.NewSource(time.Now().UnixNano())).Read(bytes)
 	return fmt.Sprintf("%x", bytes)
 }

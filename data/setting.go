@@ -1,4 +1,4 @@
-package main
+package data
 
 import (
 	"context"
@@ -29,9 +29,13 @@ func (s *GPTSetting) Update() {
 
 var gptSetting *GPTSetting
 
+func GetGPTSetting() *GPTSetting {
+	return gptSetting
+}
+
 func GetSettingWithUser(setting *UserSetting) *GPTSetting {
 	if gptSetting == nil {
-		if err := initGPTSetting(); err != nil {
+		if err := InitGPTSetting(); err != nil {
 			logrus.Fatalf("init setting failed. err: %s", err.Error())
 		}
 	}
@@ -61,7 +65,7 @@ func storeSetting(s *GPTSetting) {
 	}
 }
 
-func initGPTSetting() error {
+func InitGPTSetting() error {
 	data := rd.Get(context.Background(), RedisSetting).Val()
 	if data == "" {
 		return errors.New("undefined setting")
