@@ -244,6 +244,7 @@ func getRequestUser(writer http.ResponseWriter, request *http.Request) (user *Us
 func handleOptionsRequest(w http.ResponseWriter, r *http.Request) bool {
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusNoContent)
+		w.Header().Set("Access-Control-Allow-Methods", "GET,POST")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, access-token")
 		return true
