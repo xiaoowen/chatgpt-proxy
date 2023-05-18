@@ -244,6 +244,8 @@ func getRequestUser(writer http.ResponseWriter, request *http.Request) (user *Us
 func handleOptionsRequest(w http.ResponseWriter, r *http.Request) bool {
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusNoContent)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, access-token")
 		return true
 	}
 	return false
@@ -280,7 +282,7 @@ func chatStreamHandler(w http.ResponseWriter, r *http.Request) {
 	// w.Header().Set("content-type", "application/json;charset=utf-8")
 	// cors
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, access-token")
 	// sse
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
