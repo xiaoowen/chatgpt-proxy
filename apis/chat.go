@@ -1,7 +1,6 @@
 package apis
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -66,50 +65,49 @@ func StreamChat(ctx *fiber.Ctx) error {
 		PromptTokens: data.GetTokensFromMessages(instance.payload.Messages, instance.payload.Model),
 	}
 
-	responseText := ""
-	ctx.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		for {
-			resp, err := stream.Recv()
-			if errors.Is(err, io.EOF) {
-				usage.CompletionTokens = data.GetTokensByModel(responseText, instance.payload.Model)
-				usage.TotalTokens = usage.PromptTokens + usage.CompletionTokens
-				if err := instance.user.UpdateCostUsage(usage); err != nil {
-					logrus.Errorf("update user cost failed, err: %s, cose: %v", err.Error(), usage)
-					break
-				}
-				ret := &chatResponse{
-					Done: true, Content: "", TotalTokens: usage.TotalTokens, UserCost: instance.user.Cost,
-				}
-				if !flushSSEResponse(w, ret) {
-					break
-				}
-			}
-			logrus.Infof("response_text: %s", responseText)
-			if err != nil {
-				logrus.Errorf("stream recv error: %s", err.Error())
-				break
-			}
-			ret := &chatResponse{Content: resp.Choices[0].Delta.Content}
-			responseText += ret.Content
-			if !flushSSEResponse(w, ret) {
-				break
-			}
-		}
-	})
-	return nil
-}
+	if _, err := ctx.WriteString("retry: 10000\n"); err != nil {
+		return err
+	}
+	if _, err := ctx.WriteString("event: chat-completion-stream\n"); err != nil {
+		return err
+	}
 
-func flushSSEResponse(w *bufio.Writer, data interface{}) bool {
-	if b, err := json.Marshal(data); err != nil {
-		logrus.Error(err)
-		return false
-	} else {
-		_, _ = fmt.Fprintf(w, "data: %s\n\n", string(b))
-		if err := w.Flush(); err != nil {
-			return false
+	responseText := ""
+
+	flush := func(ret *chatResponse) {
+		if retBytes, err := json.Marshal(ret); err != nil {
+			logrus.Error(err)
+		} else {
+			if _, err := ctx.WriteString(fmt.Sprintf("data: %s\n\n", string(retBytes))); err != nil {
+				logrus.Error(err)
+			}
 		}
 	}
-	return true
+
+	for {
+		resp, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			usage.CompletionTokens = data.GetTokensByModel(responseText, instance.payload.Model)
+			usage.TotalTokens = usage.PromptTokens + usage.CompletionTokens
+			if err := instance.user.UpdateCostUsage(usage); err != nil {
+				logrus.Infof("update user cost fialed. err: %s, usage: %#v", err.Error(), usage)
+			}
+			ret := &chatResponse{
+				Done: true, Content: "", TotalTokens: usage.TotalTokens, UserCost: instance.user.Cost,
+			}
+			flush(ret)
+			return nil
+		} else if err != nil {
+			logrus.Errorf("stream recv error: %s", err.Error())
+			return err
+		}
+		ret := &chatResponse{Content: resp.Choices[0].Delta.Content}
+		responseText += ret.Content
+		flush(ret)
+		if ctx.Response().ConnectionClose() {
+			return nil
+		}
+	}
 }
 
 func getChatCompletionInstance(ctx *fiber.Ctx, usingStream bool) (instance *chatInstance, err error) {
