@@ -2,6 +2,7 @@ package apis
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -118,7 +119,7 @@ func getChatCompletionInstance(ctx *fiber.Ctx, usingStream bool) (instance *chat
 			return nil, err
 		}
 	} else {
-		if err := json.NewDecoder(ctx.Request().BodyStream()).Decode(&instance.payload); err != nil {
+		if err := json.NewDecoder(bytes.NewReader(ctx.Body())).Decode(&instance.payload); err != nil {
 			return nil, err
 		}
 	}
