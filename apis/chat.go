@@ -142,6 +142,9 @@ func getChatCompletionInstance(ctx *fiber.Ctx, usingStream bool) (instance *chat
 	if gptSetting.MaxHistoryMessages == 0 {
 		gptSetting.MaxHistoryMessages = 1
 	}
+	if gptSetting.MaxHistoryMessages > messageLen {
+		gptSetting.MaxHistoryMessages = messageLen
+	}
 	instance.payload.Messages = instance.payload.Messages[messageLen-gptSetting.MaxHistoryMessages:]
 	instance.payload.Model = gptSetting.Model
 	instance.client = openai.NewClient(gptSetting.APIKey)
