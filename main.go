@@ -56,6 +56,9 @@ func main() {
 	})
 	// 获取支持模型
 	http.HandleFunc("/models", func(writer http.ResponseWriter, request *http.Request) {
+		if handleOptionsRequest(writer, request) {
+			return
+		}
 		models := []string{
 			openai.GPT432K0314, openai.GPT432K, openai.GPT40314, openai.GPT4,
 			openai.GPT3Dot5Turbo0301, openai.GPT3Dot5Turbo,
@@ -66,6 +69,9 @@ func main() {
 
 	// 新用户
 	http.HandleFunc("/newuser", func(writer http.ResponseWriter, request *http.Request) {
+		if handleOptionsRequest(writer, request) {
+			return
+		}
 		if !isPostRequest(writer, request) {
 			return
 		}
@@ -96,6 +102,9 @@ func main() {
 
 	// 编辑用户
 	http.HandleFunc("/edituser", func(writer http.ResponseWriter, request *http.Request) {
+		if handleOptionsRequest(writer, request) {
+			return
+		}
 		if !isPostRequest(writer, request) {
 			return
 		}
@@ -141,6 +150,9 @@ func main() {
 	})
 	// 全部用户
 	http.HandleFunc("/users", func(writer http.ResponseWriter, request *http.Request) {
+		if handleOptionsRequest(writer, request) {
+			return
+		}
 		if user, err := getRequestUser(writer, request); err != nil {
 			return
 		} else {
@@ -152,6 +164,9 @@ func main() {
 	})
 	// 用户信息
 	http.HandleFunc("/profile", func(writer http.ResponseWriter, request *http.Request) {
+		if handleOptionsRequest(writer, request) {
+			return
+		}
 		if user, err := getRequestUser(writer, request); err != nil {
 			return
 		} else {
@@ -160,6 +175,9 @@ func main() {
 	})
 	// 全局设置
 	http.HandleFunc("/setting", func(writer http.ResponseWriter, request *http.Request) {
+		if handleOptionsRequest(writer, request) {
+			return
+		}
 		if user, err := getRequestUser(writer, request); err != nil {
 			return
 		} else {
@@ -171,6 +189,9 @@ func main() {
 	})
 	// 全局设置更新
 	http.HandleFunc("/settingedit", func(writer http.ResponseWriter, request *http.Request) {
+		if handleOptionsRequest(writer, request) {
+			return
+		}
 		if !isPostRequest(writer, request) {
 			return
 		}
@@ -220,6 +241,14 @@ func getRequestUser(writer http.ResponseWriter, request *http.Request) (user *Us
 	return user, nil
 }
 
+func handleOptionsRequest(w http.ResponseWriter, r *http.Request) bool {
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return true
+	}
+	return false
+}
+
 func isPostRequest(w http.ResponseWriter, r *http.Request) bool {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Must POST", http.StatusMethodNotAllowed)
@@ -229,6 +258,9 @@ func isPostRequest(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func chatStreamHandler(w http.ResponseWriter, r *http.Request) {
+	if handleOptionsRequest(w, r) {
+		return
+	}
 	instance, err := getChatInstance(w, r, true)
 	if err != nil {
 		logrus.Error(err)
@@ -307,6 +339,9 @@ func flushResponse(f http.Flusher, w http.ResponseWriter, ret *chatResponse) {
 }
 
 func chatHandler(w http.ResponseWriter, r *http.Request) {
+	if handleOptionsRequest(w, r) {
+		return
+	}
 	instance, err := getChatInstance(w, r, false)
 	if err != nil {
 		logrus.Error(err)
