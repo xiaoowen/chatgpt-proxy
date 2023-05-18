@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/xiaoowen/chatgpt-proxy/data"
@@ -26,7 +27,7 @@ func EditSetting(ctx *fiber.Ctx) error {
 		return ctx.SendStatus(fiber.StatusForbidden)
 	}
 	setting := &data.GPTSetting{}
-	if err := json.NewDecoder(ctx.Request().BodyStream()).Decode(setting); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(ctx.Body())).Decode(setting); err != nil {
 		return ctx.SendStatus(fiber.StatusBadRequest)
 	}
 	setting.Update()

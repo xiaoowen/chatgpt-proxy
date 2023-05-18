@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -19,7 +20,7 @@ func NewUser(ctx *fiber.Ctx) error {
 	}
 
 	newUser := &data.User{}
-	if err := json.NewDecoder(ctx.Request().BodyStream()).Decode(newUser); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(ctx.Body())).Decode(newUser); err != nil {
 		return ctx.SendStatus(fiber.StatusBadRequest)
 	}
 	if newUser.ExpireTimestamp == 0 {
@@ -44,7 +45,7 @@ func EditUser(ctx *fiber.Ctx) error {
 	}
 
 	editUser := &data.User{}
-	if err := json.NewDecoder(ctx.Request().BodyStream()).Decode(editUser); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(ctx.Body())).Decode(editUser); err != nil {
 		return ctx.SendStatus(fiber.StatusBadRequest)
 	}
 	if editUser.Token != user.Token {
